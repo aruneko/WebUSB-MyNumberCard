@@ -1,0 +1,73 @@
+{
+  "name": "my_number_card_driver",
+  "version": "1.0.0",
+  "description": "My Number Card Driver for WebUSB",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "lint": "tslint --project tsconfig.json -t codeFrame 'src/**/*.ts' 'test/**/*.ts'",
+    "build": "tsc",
+    "test": "jest --coverage"
+  },
+  "jest": {
+    "transform": {
+      ".(ts|tsx)": "ts-jest"
+    },
+    "testEnvironment": "node",
+    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/test/"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 90,
+        "functions": 95,
+        "lines": 95,
+        "statements": 95
+      }
+    },
+    "collectCoverageFrom": [
+      "src/*.{js,ts}"
+    ]
+  },
+  "author": "Aruneko",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aruneko/WebUSB-MyNumberCard.git"
+  },
+  "license": "MIT",
+  "prettier": {
+    "semi": false,
+    "singleQuote": true
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.11",
+    "@types/jest-diff": "^20.0.1",
+    "@types/jssha": "^2.0.0",
+    "@types/prettier": "^1.16.1",
+    "@types/w3c-web-usb": "^1.0.3",
+    "jest": "^24.3.1",
+    "prettier": "^1.16.4",
+    "ts-jest": "^24.0.0",
+    "tslint": "^5.13.1",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-config-standard": "^8.0.1",
+    "typescript": "^3.3.3333"
+  },
+  "dependencies": {
+    "jssha": "^2.3.1",
+    "rc_s380_driver": "^1.0.1"
+  }
+}
