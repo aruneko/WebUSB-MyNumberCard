@@ -2,6 +2,7 @@ import { Type4BTag } from './Type4B'
 import { Type4BPacket } from './Type4BPacket';
 import { ASN1Partial } from './ASN1';
 import { HashType, MessagePacket } from './MessagePacket';
+import { PersonalData } from './PersonalData'
 
 export class MyNumberCard {
   private constructor(private device: Type4BTag) {}
@@ -68,6 +69,10 @@ export class MyNumberCard {
 
   private async selectMyNumberEF(): Promise<Type4BPacket> {
     return this.selectEF(Uint8Array.of(0x00, 0x01))
+  }
+
+  private async selectPersonalDataEF(): Promise<Type4BPacket> {
+    return this.selectEF(Uint8Array.of(0x00, 0x02))
   }
 
   private async selectCardInfoPinEF(): Promise<Type4BPacket> {
@@ -153,6 +158,35 @@ export class MyNumberCard {
     await this.disconnect()
 
     return String.fromCharCode(...myNumber.slice(3, 15))
+  }
+
+  public async getPersonalData(pin: string): Promise<PersonalData> {
+    // マイナンバーカードに接続
+    await this.device.connectToCard()
+
+    // Select DF
+    await this.selectCardInfoAP()
+
+    // Select Pin EF
+    await this.selectCardInfoPinEF()
+
+    // Verify Pin
+    await this.verifyPin(pin)
+
+    // Select Personal Data EF
+    await this.selectPersonalDataEF()
+
+    // Read Personal data length
+    const lengthPacket = await this.readBinary(7)
+    const parser = new ASN1Partial(lengthPacket)
+
+    // Read Personal Data
+    const personalData = await this.readBinary(parser.size)
+
+    // 通信終了
+    await this.disconnect()
+
+    return new PersonalData(personalData)
   }
 
   public async signMessageWithPrivateKey(hashType: HashType, pin: string, message: string): Promise<Uint8Array> {
