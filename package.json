@@ -1,6 +1,6 @@
 {
   "name": "my_number_card_driver",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "My Number Card Driver for WebUSB",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
