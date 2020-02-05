@@ -4,12 +4,12 @@ export class PersonalData {
   readonly birthday: Date
   readonly sex: string
 
-  constructor(rawData: Uint8Array) {
+  constructor(rawData: Uint8Array, offsetSize: number) {
     // デコード用
     const decoder = new TextDecoder("UTF-8")
 
     // 全体のヘッダを切り落とす
-    let tmpRawData = rawData.slice(3)
+    let tmpRawData = rawData.slice(offsetSize)
 
     // データのヘッダを切り落とす
     const headerLength = tmpRawData[2]

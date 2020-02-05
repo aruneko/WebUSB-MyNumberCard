@@ -186,7 +186,7 @@ export class MyNumberCard {
     // 通信終了
     await this.disconnect()
 
-    return new PersonalData(personalData)
+    return new PersonalData(personalData, parser.offsetSize)
   }
 
   public async signMessageWithPrivateKey(hashType: HashType, pin: string, message: string): Promise<Uint8Array> {

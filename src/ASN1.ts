@@ -60,6 +60,10 @@ export class ASN1Partial {
     }
   }
 
+  get offsetSize() {
+    return this.offset
+  }
+
   get size() {
     return this.offset + this.length
   }
