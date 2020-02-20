@@ -3,7 +3,7 @@ import { Type4BPacket } from './Type4BPacket';
 import { ASN1Partial } from './ASN1';
 import { PersonalData } from './PersonalData'
 
-export type MyNumberCardRes = Partial<PersonalData> & {numOfRetry?: number,
+type MyNumberCardRes = Partial<PersonalData> & {numOfRetry?: number,
   status: "success" | "fail" | "locked" | "wrong_pin_length"}
 
 export class MyNumberCard {
