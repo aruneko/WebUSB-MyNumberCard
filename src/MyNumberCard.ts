@@ -3,8 +3,11 @@ import { Type4BPacket } from './Type4BPacket';
 import { ASN1Partial } from './ASN1';
 import { PersonalData } from './PersonalData'
 
-type MyNumberCardRes = Partial<PersonalData> & {numOfRetry?: number,
-  status: "success" | "fail" | "locked" | "wrong_pin_length"}
+export type MyNumberCardRes = {
+  personalData: PersonalData | null,
+  numOfRetry: number | null,
+  status: "success" | "fail" | "locked" | "wrong_pin_length"
+}
 
 export class MyNumberCard {
   private constructor(private device: Type4BTag) {}
@@ -109,7 +112,11 @@ export class MyNumberCard {
     } else {
       console.error("wrong pin length");
       await this.disconnect();
-      return {status: "wrong_pin_length"}
+      return {
+        personalData: null,
+        numOfRetry: null,
+        status: "wrong_pin_length"
+      }
     }
 
     // Verify Pin
@@ -134,13 +141,16 @@ export class MyNumberCard {
       await this.disconnect();
       const returnPersonalData = new PersonalData(personalData, parser.offsetSize);
       return {
-        ...returnPersonalData,
+        personalData: returnPersonalData,
+        numOfRetry: null,
         status: "success"
       }
     } else if (status[0] === 0x69 && status[1] === 0x84) {
       // pin is locked
       await this.disconnect();
       return {
+        personalData: null,
+        numOfRetry: null,
         status: "locked"
       }
     } else {
@@ -150,6 +160,7 @@ export class MyNumberCard {
       Atomics.sub(status, 1, 192);
       const numOfRetry = Atomics.load(status, 0);
       return {
+        personalData: null,
         numOfRetry,
         status: "fail"
       }
