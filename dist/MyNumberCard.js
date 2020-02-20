@@ -1,6 +1,5 @@
 import { Type4BTag } from './Type4B';
 import { ASN1Partial } from './ASN1';
-import { MessagePacket } from './MessagePacket';
 import { PersonalData } from './PersonalData';
 export class MyNumberCard {
     constructor(device) {
@@ -43,39 +42,14 @@ export class MyNumberCard {
         const cardInfoAP = Uint8Array.of(0xD3, 0x92, 0x10, 0x00, 0x31, 0x00, 0x01, 0x01, 0x04, 0x08);
         return this.selectDF(cardInfoAP);
     }
-    async selectCertAP() {
-        const certAP = Uint8Array.of(0xd3, 0x92, 0xf0, 0x00, 0x26, 0x01, 0x00, 0x00, 0x00, 0x01);
-        return this.selectDF(certAP);
-    }
-    async selectMyNumberEF() {
-        return this.selectEF(Uint8Array.of(0x00, 0x01));
-    }
     async selectPersonalDataEF() {
         return this.selectEF(Uint8Array.of(0x00, 0x02));
     }
     async selectCardInfoPinEF() {
         return this.selectEF(Uint8Array.of(0x00, 0x11));
     }
-    async selectRSAPrivateKeyPinEF() {
-        return this.selectEF(Uint8Array.of(0x00, 0x18));
-    }
-    async selectRSAPublicKeyEF() {
-        return this.selectEF(Uint8Array.of(0x00, 0x0a));
-    }
-    async selectRSAPrivateKeyIEF() {
-        return this.selectEF(Uint8Array.of(0x00, 0x17));
-    }
-    async signMessage(hashType, message) {
-        console.info('===== sign =====');
-        const command = MessagePacket.makeMessagePacket(hashType, message).payload;
-        return this.device.sendCommand(command);
-    }
-    async checkPublicKeyLength() {
-        console.info('===== check Public Key length =====');
-        const readPublicKeyCommand = Uint8Array.of(0x00, 0xb0, 0x00, 0x00, 0x07);
-        const response = await this.device.sendCommand(readPublicKeyCommand);
-        const parser = new ASN1Partial(response.data);
-        return parser.size;
+    async selectCardInfoPinEFB() {
+        return this.selectEF(Uint8Array.of(0x00, 0x11));
     }
     async readBinary(size) {
         const result = new Uint8Array(size);
@@ -98,74 +72,61 @@ export class MyNumberCard {
         }
         return result;
     }
-    async getMyNumber(pin) {
-        // マイナンバーカードに接続
-        await this.device.connectToCard();
-        // Select DF
-        await this.selectCardInfoAP();
-        // Select Pin EF
-        await this.selectCardInfoPinEF();
-        // Verify Pin
-        await this.verifyPin(pin);
-        // Select My Number EF
-        await this.selectMyNumberEF();
-        // Read my number
-        const myNumber = await this.readBinary(16);
-        // 通信終了
-        await this.disconnect();
-        return String.fromCharCode(...myNumber.slice(3, 15));
-    }
     async getPersonalData(pin) {
         // マイナンバーカードに接続
         await this.device.connectToCard();
         // Select DF
         await this.selectCardInfoAP();
         // Select Pin EF
-        await this.selectCardInfoPinEF();
+        if (pin.length === 4) {
+            await this.selectCardInfoPinEF();
+        }
+        else if (pin.length === 14) {
+            await this.selectCardInfoPinEFB();
+        }
+        else {
+            console.error("wrong pin length");
+            await this.disconnect();
+            return { status: "wrong_pin_length" };
+        }
         // Verify Pin
-        await this.verifyPin(pin);
-        // Select Personal Data EF
-        await this.selectPersonalDataEF();
-        // Read Personal data length
-        const lengthPacket = await this.readBinary(7);
-        const parser = new ASN1Partial(lengthPacket);
-        // Read Personal Data
-        const personalData = await this.readBinary(parser.size);
-        // 通信終了
-        await this.disconnect();
-        return new PersonalData(personalData, parser.offsetSize);
-    }
-    async signMessageWithPrivateKey(hashType, pin, message) {
-        // マイナンバーカードに接続
-        await this.device.connectToCard();
-        // Select DF
-        await this.selectCertAP();
-        // Select Pin EF
-        await this.selectRSAPrivateKeyPinEF();
-        // Verify PIN
-        await this.verifyPin(pin);
-        // Select Private Key IEF
-        await this.selectRSAPrivateKeyIEF();
-        // Sign
-        const signedMessage = await this.signMessage(hashType, message);
-        // 通信終了
-        await this.disconnect();
-        return signedMessage.data;
-    }
-    async getPublicKey() {
-        // マイナンバーカードに接続
-        await this.device.connectToCard();
-        // Select DF
-        await this.selectCertAP();
-        // Select EF
-        await this.selectRSAPublicKeyEF();
-        // Check Public Key Length
-        const publicKeyLength = await this.checkPublicKeyLength();
-        // Get Public Key
-        const publicKey = await this.readBinary(publicKeyLength);
-        // 通信終了
-        await this.disconnect();
-        // 取得した公開鍵を返す
-        return publicKey;
+        const result = await this.verifyPin(pin);
+        // https://qiita.com/gebo/items/fa35c1f725f4c443f3f3#%EF%BC%93verify-%E8%AA%8D%E8%A8%BC%E7%94%A8pin
+        const status = result.status;
+        // pin is successfully verified
+        if (status[0] === 0x90 && status[1] === 0x00) {
+            // Select Personal Data EF
+            await this.selectPersonalDataEF();
+            // Read Personal data length
+            const lengthPacket = await this.readBinary(7);
+            const parser = new ASN1Partial(lengthPacket);
+            // Read Personal Data
+            const personalData = await this.readBinary(parser.size);
+            // 通信終了
+            await this.disconnect();
+            const returnPersonalData = new PersonalData(personalData, parser.offsetSize);
+            return {
+                ...returnPersonalData,
+                status: "success"
+            };
+        }
+        else if (status[0] === 0x69 && status[1] === 0x84) {
+            // pin is locked
+            await this.disconnect();
+            return {
+                status: "locked"
+            };
+        }
+        else {
+            // wrong pin
+            await this.disconnect();
+            // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Atomics/sub
+            Atomics.sub(status, 1, 192);
+            const numOfRetry = Atomics.load(status, 0);
+            return {
+                numOfRetry,
+                status: "fail"
+            };
+        }
     }
 }

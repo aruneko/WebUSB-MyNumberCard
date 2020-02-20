@@ -3,7 +3,7 @@ import { Type4BPacket } from './Type4BPacket';
 import { ASN1Partial } from './ASN1';
 import { PersonalData } from './PersonalData'
 
-type MyNumberCardRes = Partial<PersonalData> & {numOfRetry?: number,
+export type MyNumberCardRes = Partial<PersonalData> & {numOfRetry?: number,
   status: "success" | "fail" | "locked" | "wrong_pin_length"}
 
 export class MyNumberCard {
@@ -132,7 +132,7 @@ export class MyNumberCard {
 
       // 通信終了
       await this.disconnect();
-      const returnPersonalData = new PersonalData(personalData);
+      const returnPersonalData = new PersonalData(personalData, parser.offsetSize);
       return {
         ...returnPersonalData,
         status: "success"

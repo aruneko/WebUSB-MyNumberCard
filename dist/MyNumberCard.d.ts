@@ -1,5 +1,8 @@
-import { HashType } from './MessagePacket';
 import { PersonalData } from './PersonalData';
+export declare type MyNumberCardRes = Partial<PersonalData> & {
+    numOfRetry?: number;
+    status: "success" | "fail" | "locked" | "wrong_pin_length";
+};
 export declare class MyNumberCard {
     private device;
     private constructor();
@@ -10,18 +13,9 @@ export declare class MyNumberCard {
     private selectEF;
     private verifyPin;
     private selectCardInfoAP;
-    private selectCertAP;
-    private selectMyNumberEF;
     private selectPersonalDataEF;
     private selectCardInfoPinEF;
-    private selectRSAPrivateKeyPinEF;
-    private selectRSAPublicKeyEF;
-    private selectRSAPrivateKeyIEF;
-    private signMessage;
-    private checkPublicKeyLength;
+    private selectCardInfoPinEFB;
     private readBinary;
-    getMyNumber(pin: string): Promise<string>;
-    getPersonalData(pin: string): Promise<PersonalData>;
-    signMessageWithPrivateKey(hashType: HashType, pin: string, message: string): Promise<Uint8Array>;
-    getPublicKey(): Promise<Uint8Array>;
+    getPersonalData(pin: string): Promise<MyNumberCardRes>;
 }

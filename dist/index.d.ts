@@ -1,3 +1,3 @@
 export { Type4BTag } from './Type4B';
-export { MyNumberCard } from './MyNumberCard';
+export { MyNumberCard, MyNumberCardRes } from './MyNumberCard';
 export { PersonalData } from './PersonalData';
